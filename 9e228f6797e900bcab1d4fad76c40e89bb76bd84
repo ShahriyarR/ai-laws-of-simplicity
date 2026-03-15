@@ -1,0 +1,175 @@
+experiment/metrics/collector.py
+  0a95d79828f50230 1-128
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.11",
+  "base_commit_sha": "9e228f6797e900bcab1d4fad76c40e89bb76bd84",
+  "prompts": {
+    "0a95d79828f50230": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_30ecdb519ffeZ5VnPvwaNgVxhz",
+        "model": "opencode-go/glm-5"
+      },
+      "human_author": "Shahriyar Rzayev <rzayev.sehriyar@gmail.com>",
+      "messages": [
+        {
+          "type": "user",
+          "text": "You are implementing Tasks 3.1 through 6.1 in one batch. Each task builds on the previous one.\n\n## Task 3.1: Implement SWE-bench Harness\n\n**Files:**\n- Create: `experiment/harness/swe_bench.py`\n\nCreate the SWEBenchHarness class that:\n- Loads tasks from SWE-bench Lite dataset using `datasets` library\n- Classifies difficulty based on patch lines: Simple (<10), Medium (10-50), Complex (>50)\n- Implements verify_solution using swebench.metrics.get_test_results\n- Caches tasks in _tasks_cache\n\n## Task 4.1: Implement HumanEval Harness\n\n**Files:**\n- Create: `experiment/harness/humaneval.py`\n\nCreate the HumanEvalHarness class that:\n- Loads tasks from `openai/humaneval` dataset\n- Classifies difficulty based on canonical solution lines\n- Implements verify_solution using subprocess to run human_eval.execution\n\n## Task 5.1: Implement Metrics Collector\n\n**Files:**\n- Create: `experiment/metrics/collector.py`\n\nCreate:\n- RunMetrics dataclass with: task_id, benchmark, condition, input_tokens, output_tokens, total_tokens, success, time_seconds, iterations, error, timestamp\n- MetricsCollector class with: start_run(), update_tokens(), increment_iteration(), end_run(), load_all_results(), to_csv()\n- Filename sanitization for task_ids (replace `/` and `:` with `_`)\n\n## Task 6.1: Implement Statistical Analyzer\n\n**Files:**\n- Create: `experiment/metrics/analyzer.py`\n\nCreate:\n- AnalysisResults dataclass\n- paired_token_test() with bootstrap CI\n- success_rate_test() using McNemar's test\n- analyze_by_difficulty() with two-way ANOVA\n- time_distribution_test() with Mann-Whitney U\n- run_full_analysis() orchestrator\n\n## Context\n\nThis builds the core experiment infrastructure:\n- Tasks 3-4: Benchmark harnesses for SWE-bench and HumanEval\n- Task 5: Metrics collection during experiment runs\n- Task 6: Statistical analysis pipeline for RQ1-RQ3\n\nWork from: /home/shako/REPOS/Indie-Hacking/ai-laws-of-simplicity\n\nRefer to the plan at `docs/superpowers/plans/2026-03-15-research-experiment-implementation.md` for exact code specifications (lines 266-658).\n\n## Your Job\n\n1. Implement all four tasks (3.1, 4.1, 5.1, 6.1)\n2. Verify imports work after each\n3. Commit after each task with appropriate message\n4. Report back with status for all four tasks",
+          "timestamp": "2026-03-15T11:12:10.985+00:00"
+        },
+        {
+          "type": "tool_use",
+          "name": "read",
+          "input": {
+            "filePath": "/home/shako/REPOS/Indie-Hacking/ai-laws-of-simplicity/docs/superpowers/plans/2026-03-15-research-experiment-implementation.md",
+            "limit": 400,
+            "offset": 266
+          },
+          "timestamp": "2026-03-15T11:12:10.990+00:00"
+        },
+        {
+          "type": "tool_use",
+          "name": "read",
+          "input": {
+            "filePath": "/home/shako/REPOS/Indie-Hacking/ai-laws-of-simplicity/experiment/harness/base.py"
+          },
+          "timestamp": "2026-03-15T11:12:10.990+00:00"
+        },
+        {
+          "type": "tool_use",
+          "name": "glob",
+          "input": {
+            "pattern": "experiment/**/*.py"
+          },
+          "timestamp": "2026-03-15T11:12:10.990+00:00"
+        },
+        {
+          "type": "assistant",
+          "text": "I'll implement Tasks 3.1 through 6.1. Let me first read the plan for exact specifications and understand the current codebasestructure.",
+          "timestamp": "2026-03-15T11:12:10.990+00:00"
+        },
+        {
+          "type": "tool_use",
+          "name": "read",
+          "input": {
+            "filePath": "/home/shako/REPOS/Indie-Hacking/ai-laws-of-simplicity/docs/superpowers/plans/2026-03-15-research-experiment-implementation.md",
+            "limit": 200,
+            "offset": 666
+          },
+          "timestamp": "2026-03-15T11:12:15.501+00:00"
+        },
+        {
+          "type": "tool_use",
+          "name": "read",
+          "input": {
+            "filePath": "/home/shako/REPOS/Indie-Hacking/ai-laws-of-simplicity/docs/superpowers/plans/2026-03-15-research-experiment-implementation.md",
+            "limit": 100,
+            "offset": 866
+          },
+          "timestamp": "2026-03-15T11:12:18.855+00:00"
+        },
+        {
+          "type": "tool_use",
+          "name": "write",
+          "input": {
+            "content": "import json\nimport random\nfrom pathlib import Path\nfrom typing import Any\n\nfrom .base import BenchmarkHarness, TaskSpec\n\n\nclass SWEBenchHarness(BenchmarkHarness):\n    \"\"\"Harness for SWE-bench Lite benchmark.\"\"\"\n    \n    def __init__(self, data_path: Path | None = None):\n        \"\"\"Initialize SWE-bench harness.\n        \n        Args:\n            data_path: Path to SWE-bench dataset (optional, downloads if not provided)\n        \"\"\"\n        self.data_path = data_path\n        self._tasks_cache: dict[str, TaskSpec] | None = None\n    \n    def _load_dataset(self) -> list[dict[str, Any]]:\n        \"\"\"Load SWE-bench Lite dataset.\"\"\"\n        from datasets import load_dataset\n        \n        dataset = load_dataset(\"princeton-nlp/SWE-bench_Lite\", split=\"test\")\n        return [item for item in dataset]\n    \n    def load_tasks(self, num_tasks: int, seed: int) -> list[TaskSpec]:\n        \"\"\"Load a random sample of SWE-bench tasks.\n        \n        Simple/Medium/Complex classification based on patches:\n        - Simple: <10 lines changed\n        - Medium: 10-50 lines changed  \n        - Complex: >50 lines changed\n        \"\"\"\n        all_tasks = self._load_dataset()\n        \n        rng = random.Random(seed)\n        sampled = rng.sample(all_tasks, min(num_tasks, len(all_tasks)))\n        \n        task_specs = []\n        for task in sampled:\n            # Estimate difficulty from patch\n            patch = task.get(\"patch\", \"\")\n            lines_changed = len(patch.split('\\n')) if patch else 0\n            \n            if lines_changed < 10:\n                difficulty = \"simple\"\n            elif lines_changed <= 50:\n                difficulty = \"medium\"\n            else:\n                difficulty = \"complex\"\n            \n            spec = TaskSpec(\n                task_id=task[\"instance_id\"],\n                benchmark=\"swe_bench_lite\",\n                prompt=task[\"problem_statement\"],\n                test_file=None,  # SWE-bench has test_patch\n                expected_solution=task.get(\"patch\"),\n                difficulty=difficulty,\n                repo=task.get(\"repo\", \"\"),\n                base_commit=task.get(\"base_commit\"),\n                problem_statement=task[\"problem_statement\"],\n            )\n            task_specs.append(spec)\n        \n        # Cache tasks outside the loop\n        self._tasks_cache = {t.task_id: t for t in task_specs}\n        \n        return task_specs\n    \n    def verify_solution(self, task: TaskSpec, solution_path: Path) -> bool:\n        \"\"\"Verify solution using SWE-bench test harness.\"\"\"\n        from swebench.metrics import get_test_results\n        \n        try:\n            # SWE-bench requires test_patch from the instance\n            # The solution_path should be a repo with the patch applied\n            results = get_test_results(\n                instance_id=task.task_id,\n                test_patch=task.expected_solution or \"\",  # Use patch from task\n                repo_path=str(solution_path),\n            )\n            return results.get(\"passed\", 0) == results.get(\"total\", 1)\n        except Exception:\n            return False\n    \n    def get_task_metadata(self, task_id: str) -> dict[str, Any]:\n        \"\"\"Get SWE-bench task metadata.\"\"\"\n        if self._tasks_cache and task_id in self._tasks_cache:\n            task = self._tasks_cache[task_id]\n            return {\n                \"difficulty\": task.difficulty,\n                \"repo\": task.repo,\n                \"base_commit\": task.base_commit,\n            }\n        return {}",
+            "filePath": "/home/shako/REPOS/Indie-Hacking/ai-laws-of-simplicity/experiment/harness/swe_bench.py"
+          },
+          "timestamp": "2026-03-15T11:12:21.922+00:00"
+        },
+        {
+          "type": "assistant",
+          "text": "Now I have all the specifications. Let me implement allfour tasks.",
+          "timestamp": "2026-03-15T11:12:21.922+00:00"
+        },
+        {
+          "type": "tool_use",
+          "name": "bash",
+          "input": {
+            "command": "cd /home/shako/REPOS/Indie-Hacking/ai-laws-of-simplicity && python -c \"from experiment.harness.swe_bench import SWEBenchHarness; print('OK')\"",
+            "description": "Verify SWE-bench harnessimports"
+          },
+          "timestamp": "2026-03-15T11:12:43.753+00:00"
+        },
+        {
+          "type": "tool_use",
+          "name": "bash",
+          "input": {
+            "command": "python3 -c \"from experiment.harness.swe_bench import SWEBenchHarness; print('OK')\"",
+            "description": "Verify SWE-bench harness imports with python3"
+          },
+          "timestamp": "2026-03-15T11:12:46.371+00:00"
+        },
+        {
+          "type": "tool_use",
+          "name": "bash",
+          "input": {
+            "command": "git add experiment/harness/swe_bench.py && git commit -m \"feat: add SWE-bench harness implementation\"",
+            "description": "Commit SWE-bench harness"
+          },
+          "timestamp": "2026-03-15T11:12:50.816+00:00"
+        },
+        {
+          "type": "tool_use",
+          "name": "write",
+          "input": {
+            "content": "import json\nimport random\nfrom pathlib import Path\nfrom typing import Any\n\nfrom .base import BenchmarkHarness, TaskSpec\n\n\nclass HumanEvalHarness(BenchmarkHarness):\n    \"\"\"Harness for HumanEval benchmark.\"\"\"\n    \n    def __init__(self, data_path: Path | None = None):\n        \"\"\"Initialize HumanEval harness.\n        \n        Args:\n            data_path: Path to HumanEval dataset (optional, downloads if not provided)\n        \"\"\"\n        self.data_path = data_path\n        self._tasks_cache: dict[str, TaskSpec] | None = None\n    \n    def _load_dataset(self) -> list[dict[str, Any]]:\n        \"\"\"Load HumanEval dataset.\"\"\"\n        from datasets import load_dataset\n        \n        dataset = load_dataset(\"openai/humaneval\", split=\"test\")\n        return [item for item in dataset]\n    \n    def load_tasks(self, num_tasks: int, seed: int) -> list[TaskSpec]:\n        \"\"\"Load a random sample of HumanEval tasks.\n        \n        Difficulty based on expected solution length:\n        - Simple: <10 lines\n        - Medium: 10-50 lines\n        - Complex: >50 lines (rare in HumanEval)\n        \"\"\"\n        all_tasks = self._load_dataset()\n        \n        rng = random.Random(seed)\n        sampled = rng.sample(all_tasks, min(num_tasks, len(all_tasks)))\n        \n        task_specs = []\n        for task in sampled:\n            # HumanEval tasks are mostly simple\n            # Estimate from canonical solution if available\n            canonical = task.get(\"canonical_solution\", \"\")\n            lines = len(canonical.split('\\n')) if canonical else 10\n            \n            if lines < 10:\n                difficulty = \"simple\"\n            elif lines <= 50:\n                difficulty = \"medium\"\n            else:\n                difficulty = \"complex\"\n            \n            spec = TaskSpec(\n                task_id=task[\"task_id\"],\n                benchmark=\"human_eval\",\n                prompt=task[\"prompt\"],\n                test_file=None,\n                expected_solution=canonical,\n                difficulty=difficulty,\n                function_signature=task[\"prompt\"].split('\\n')[0],\n                test_cases=None,  # HumanEval uses test column in dataset\n            )\n            task_specs.append(spec)\n        \n        self._tasks_cache = {t.task_id: t for t in task_specs}\n        return task_specs\n    \n    def verify_solution(self, task: TaskSpec, solution_path: Path) -> bool:\n        \"\"\"Verify solution using HumanEval test runner.\"\"\"\n        import subprocess\n        \n        try:\n            # HumanEval uses exec-based testing\n            result = subprocess.run(\n                [\"python\", \"-m\", \"human_eval.execution\", str(solution_path)],\n                capture_output=True,\n                text=True,\n                timeout=30,\n            )\n            return result.returncode == 0\n        except Exception:\n            return False\n    \n    def get_task_metadata(self, task_id: str) -> dict[str, Any]:\n        \"\"\"Get HumanEval task metadata.\"\"\"\n        if self._tasks_cache and task_id in self._tasks_cache:\n            task = self._tasks_cache[task_id]\n            return {\n                \"difficulty\": task.difficulty,\n                \"function_signature\": task.function_signature,\n            }\n        return {}",
+            "filePath": "/home/shako/REPOS/Indie-Hacking/ai-laws-of-simplicity/experiment/harness/humaneval.py"
+          },
+          "timestamp": "2026-03-15T11:12:53.130+00:00"
+        },
+        {
+          "type": "tool_use",
+          "name": "bash",
+          "input": {
+            "command": "python3 -c \"from experiment.harness.humaneval import HumanEvalHarness; print('OK')\"",
+            "description": "Verify HumanEval harness imports"
+          },
+          "timestamp": "2026-03-15T11:13:04.871+00:00"
+        },
+        {
+          "type": "tool_use",
+          "name": "bash",
+          "input": {
+            "command": "git add experiment/harness/humaneval.py && git commit -m \"feat: add HumanEval harness implementation\"",
+            "description": "Commit HumanEval harness"
+          },
+          "timestamp": "2026-03-15T11:13:07.819+00:00"
+        },
+        {
+          "type": "tool_use",
+          "name": "write",
+          "input": {
+            "content": "import json\nimport time\nfrom dataclasses import dataclass, asdict\nfrom pathlib import Path\nfrom typing import Any\n\n\n@dataclass\nclass RunMetrics:\n    \"\"\"Collected metrics for a single agent run.\"\"\"\n    \n    task_id: str\n    benchmark: str\n    condition: str\n    \n    # Primary metrics\n    input_tokens: int\n    output_tokens: int\n    total_tokens: int\n    \n    # Secondary metrics\n    success: bool\n    time_seconds: float\n    iterations: int\n    \n    # Metadata\n    error: str | None\n    timestamp: str\n    \n    def to_json(self) -> dict[str, Any]:\n        \"\"\"Convert to JSON-serializable dict.\"\"\"\n        return asdict(self)\n\n\nclass MetricsCollector:\n    \"\"\"Collects and stores experiment metrics.\"\"\"\n    \n    def __init__(self, output_dir: Path):\n        \"\"\"Initialize collector.\n        \n        Args:\n            output_dir: Directory to store JSON logs\n        \"\"\"\n        self.output_dir = output_dir\n        self.output_dir.mkdir(parents=True, exist_ok=True)\n    \n    def start_run(self, task_id: str, benchmark: str, condition: str) -> dict[str, Any]:\n        \"\"\"Start a new run, return context for tracking.\n        \n        Returns:\n            Context dict with start_time\n        \"\"\"\n        return {\n            \"task_id\": task_id,\n            \"benchmark\": benchmark,\n            \"condition\": condition,\n            \"start_time\": time.time(),\n            \"start_timestamp\": time.strftime(\"%Y-%m-%dT%H:%M:%SZ\", time.gmtime()),\n            \"iterations\": 0,\n            \"input_tokens\": 0,\n            \"output_tokens\": 0,\n        }\n    \n    def update_tokens(self, ctx: dict, input_tokens: int, output_tokens: int) -> None:\n        \"\"\"Update token counts in context.\"\"\"\n        ctx[\"input_tokens\"] += input_tokens\n        ctx[\"output_tokens\"] += output_tokens\n    \n    def increment_iteration(self, ctx: dict) -> None:\n        \"\"\"Increment iteration count.\"\"\"\n        ctx[\"iterations\"] += 1\n    \n    def end_run(\n        self,\n        ctx: dict,\n        success: bool,\n        error: str | None = None,\n    ) -> RunMetrics:\n        \"\"\"End run and return final metrics.\n        \n        Args:\n            ctx: Run context from start_run\n            success: Whether task succeeded\n            error: Error message if failed\n            \n        Returns:\n            Final RunMetrics object\n        \"\"\"\n        end_time = time.time()\n        \n        metrics = RunMetrics(\n            task_id=ctx[\"task_id\"],\n            benchmark=ctx[\"benchmark\"],\n            condition=ctx[\"condition\"],\n            input_tokens=ctx[\"input_tokens\"],\n            output_tokens=ctx[\"output_tokens\"],\n            total_tokens=ctx[\"input_tokens\"] + ctx[\"output_tokens\"],\n            success=success,\n            time_seconds=end_time - ctx[\"start_time\"],\n            iterations=ctx[\"iterations\"],\n            error=error,\n            timestamp=ctx[\"start_timestamp\"],\n        )\n        \n        # Save to JSON (sanitize task_id for filename safety)\n        safe_task_id = ctx[\"task_id\"].replace(\"/\", \"_\").replace(\":\", \"_\")\n        output_file = self.output_dir / f\"{safe_task_id}_{ctx['condition']}.json\"\n        with open(output_file, \"w\") as f:\n            json.dump(metrics.to_json(), f, indent=2)\n        \n        return metrics\n    \n    def load_all_results(self) -> list[RunMetrics]:\n        \"\"\"Load all results from output directory.\"\"\"\n        results = []\n        for json_file in self.output_dir.glob(\"*.json\"):\n            with open(json_file) as f:\n                data = json.load(f)\n                results.append(RunMetrics(**data))\n        return results\n    \n    def to_csv(self, output_path: Path) -> None:\n        \"\"\"Export all results to CSV.\"\"\"\n        import pandas as pd\n        \n        results = self.load_all_results()\n        df = pd.DataFrame([r.to_json() for r in results])\n        df.to_csv(output_path, index=False)",
+            "filePath": "/home/shako/REPOS/Indie-Hacking/ai-laws-of-simplicity/experiment/metrics/collector.py"
+          },
+          "timestamp": "2026-03-15T11:13:10.649+00:00"
+        },
+        {
+          "type": "tool_use",
+          "name": "bash",
+          "input": {
+            "command": "python3 -c \"from experiment.metrics.collector import MetricsCollector, RunMetrics; print('OK')\"",
+            "description": "Verify metrics collector imports"
+          },
+          "timestamp": "2026-03-15T11:13:31.261+00:00"
+        },
+        {
+          "type": "tool_use",
+          "name": "bash",
+          "input": {
+            "command": "git add experiment/metrics/collector.py && git commit -m \"feat: add metrics collection utilities\"",
+            "description": "Commit metrics collector"
+          },
+          "timestamp": "2026-03-15T11:13:39.355+00:00"
+        }
+      ],
+      "total_additions": 128,
+      "total_deletions": 0,
+      "accepted_lines": 128,
+      "overriden_lines": 0
+    }
+  }
+}
