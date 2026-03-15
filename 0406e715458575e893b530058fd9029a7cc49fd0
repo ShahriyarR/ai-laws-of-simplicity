@@ -1,0 +1,121 @@
+experiment/harness/swe_bench.py
+  0a95d79828f50230 1-97
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.11",
+  "base_commit_sha": "0406e715458575e893b530058fd9029a7cc49fd0",
+  "prompts": {
+    "0a95d79828f50230": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_30ecdb519ffeZ5VnPvwaNgVxhz",
+        "model": "opencode-go/glm-5"
+      },
+      "human_author": "Shahriyar Rzayev <rzayev.sehriyar@gmail.com>",
+      "messages": [
+        {
+          "type": "user",
+          "text": "You are implementing Tasks 3.1 through 6.1 in one batch. Each task builds on the previous one.\n\n## Task 3.1: Implement SWE-bench Harness\n\n**Files:**\n- Create: `experiment/harness/swe_bench.py`\n\nCreate the SWEBenchHarness class that:\n- Loads tasks from SWE-bench Lite dataset using `datasets` library\n- Classifies difficulty based on patch lines: Simple (<10), Medium (10-50), Complex (>50)\n- Implements verify_solution using swebench.metrics.get_test_results\n- Caches tasks in _tasks_cache\n\n## Task 4.1: Implement HumanEval Harness\n\n**Files:**\n- Create: `experiment/harness/humaneval.py`\n\nCreate the HumanEvalHarness class that:\n- Loads tasks from `openai/humaneval` dataset\n- Classifies difficulty based on canonical solution lines\n- Implements verify_solution using subprocess to run human_eval.execution\n\n## Task 5.1: Implement Metrics Collector\n\n**Files:**\n- Create: `experiment/metrics/collector.py`\n\nCreate:\n- RunMetrics dataclass with: task_id, benchmark, condition, input_tokens, output_tokens, total_tokens, success, time_seconds, iterations, error, timestamp\n- MetricsCollector class with: start_run(), update_tokens(), increment_iteration(), end_run(), load_all_results(), to_csv()\n- Filename sanitization for task_ids (replace `/` and `:` with `_`)\n\n## Task 6.1: Implement Statistical Analyzer\n\n**Files:**\n- Create: `experiment/metrics/analyzer.py`\n\nCreate:\n- AnalysisResults dataclass\n- paired_token_test() with bootstrap CI\n- success_rate_test() using McNemar's test\n- analyze_by_difficulty() with two-way ANOVA\n- time_distribution_test() with Mann-Whitney U\n- run_full_analysis() orchestrator\n\n## Context\n\nThis builds the core experiment infrastructure:\n- Tasks 3-4: Benchmark harnesses for SWE-bench and HumanEval\n- Task 5: Metrics collection during experiment runs\n- Task 6: Statistical analysis pipeline for RQ1-RQ3\n\nWork from: /home/shako/REPOS/Indie-Hacking/ai-laws-of-simplicity\n\nRefer to the plan at `docs/superpowers/plans/2026-03-15-research-experiment-implementation.md` for exact code specifications (lines 266-658).\n\n## Your Job\n\n1. Implement all four tasks (3.1, 4.1, 5.1, 6.1)\n2. Verify imports work after each\n3. Commit after each task with appropriate message\n4. Report back with status for all four tasks",
+          "timestamp": "2026-03-15T11:12:10.985+00:00"
+        },
+        {
+          "type": "tool_use",
+          "name": "read",
+          "input": {
+            "filePath": "/home/shako/REPOS/Indie-Hacking/ai-laws-of-simplicity/docs/superpowers/plans/2026-03-15-research-experiment-implementation.md",
+            "limit": 400,
+            "offset": 266
+          },
+          "timestamp": "2026-03-15T11:12:10.990+00:00"
+        },
+        {
+          "type": "tool_use",
+          "name": "read",
+          "input": {
+            "filePath": "/home/shako/REPOS/Indie-Hacking/ai-laws-of-simplicity/experiment/harness/base.py"
+          },
+          "timestamp": "2026-03-15T11:12:10.990+00:00"
+        },
+        {
+          "type": "tool_use",
+          "name": "glob",
+          "input": {
+            "pattern": "experiment/**/*.py"
+          },
+          "timestamp": "2026-03-15T11:12:10.990+00:00"
+        },
+        {
+          "type": "assistant",
+          "text": "I'll implement Tasks 3.1 through 6.1. Let me first read the plan for exact specifications and understand the current codebasestructure.",
+          "timestamp": "2026-03-15T11:12:10.990+00:00"
+        },
+        {
+          "type": "tool_use",
+          "name": "read",
+          "input": {
+            "filePath": "/home/shako/REPOS/Indie-Hacking/ai-laws-of-simplicity/docs/superpowers/plans/2026-03-15-research-experiment-implementation.md",
+            "limit": 200,
+            "offset": 666
+          },
+          "timestamp": "2026-03-15T11:12:15.501+00:00"
+        },
+        {
+          "type": "tool_use",
+          "name": "read",
+          "input": {
+            "filePath": "/home/shako/REPOS/Indie-Hacking/ai-laws-of-simplicity/docs/superpowers/plans/2026-03-15-research-experiment-implementation.md",
+            "limit": 100,
+            "offset": 866
+          },
+          "timestamp": "2026-03-15T11:12:18.855+00:00"
+        },
+        {
+          "type": "tool_use",
+          "name": "write",
+          "input": {
+            "content": "import json\nimport random\nfrom pathlib import Path\nfrom typing import Any\n\nfrom .base import BenchmarkHarness, TaskSpec\n\n\nclass SWEBenchHarness(BenchmarkHarness):\n    \"\"\"Harness for SWE-bench Lite benchmark.\"\"\"\n    \n    def __init__(self, data_path: Path | None = None):\n        \"\"\"Initialize SWE-bench harness.\n        \n        Args:\n            data_path: Path to SWE-bench dataset (optional, downloads if not provided)\n        \"\"\"\n        self.data_path = data_path\n        self._tasks_cache: dict[str, TaskSpec] | None = None\n    \n    def _load_dataset(self) -> list[dict[str, Any]]:\n        \"\"\"Load SWE-bench Lite dataset.\"\"\"\n        from datasets import load_dataset\n        \n        dataset = load_dataset(\"princeton-nlp/SWE-bench_Lite\", split=\"test\")\n        return [item for item in dataset]\n    \n    def load_tasks(self, num_tasks: int, seed: int) -> list[TaskSpec]:\n        \"\"\"Load a random sample of SWE-bench tasks.\n        \n        Simple/Medium/Complex classification based on patches:\n        - Simple: <10 lines changed\n        - Medium: 10-50 lines changed  \n        - Complex: >50 lines changed\n        \"\"\"\n        all_tasks = self._load_dataset()\n        \n        rng = random.Random(seed)\n        sampled = rng.sample(all_tasks, min(num_tasks, len(all_tasks)))\n        \n        task_specs = []\n        for task in sampled:\n            # Estimate difficulty from patch\n            patch = task.get(\"patch\", \"\")\n            lines_changed = len(patch.split('\\n')) if patch else 0\n            \n            if lines_changed < 10:\n                difficulty = \"simple\"\n            elif lines_changed <= 50:\n                difficulty = \"medium\"\n            else:\n                difficulty = \"complex\"\n            \n            spec = TaskSpec(\n                task_id=task[\"instance_id\"],\n                benchmark=\"swe_bench_lite\",\n                prompt=task[\"problem_statement\"],\n                test_file=None,  # SWE-bench has test_patch\n                expected_solution=task.get(\"patch\"),\n                difficulty=difficulty,\n                repo=task.get(\"repo\", \"\"),\n                base_commit=task.get(\"base_commit\"),\n                problem_statement=task[\"problem_statement\"],\n            )\n            task_specs.append(spec)\n        \n        # Cache tasks outside the loop\n        self._tasks_cache = {t.task_id: t for t in task_specs}\n        \n        return task_specs\n    \n    def verify_solution(self, task: TaskSpec, solution_path: Path) -> bool:\n        \"\"\"Verify solution using SWE-bench test harness.\"\"\"\n        from swebench.metrics import get_test_results\n        \n        try:\n            # SWE-bench requires test_patch from the instance\n            # The solution_path should be a repo with the patch applied\n            results = get_test_results(\n                instance_id=task.task_id,\n                test_patch=task.expected_solution or \"\",  # Use patch from task\n                repo_path=str(solution_path),\n            )\n            return results.get(\"passed\", 0) == results.get(\"total\", 1)\n        except Exception:\n            return False\n    \n    def get_task_metadata(self, task_id: str) -> dict[str, Any]:\n        \"\"\"Get SWE-bench task metadata.\"\"\"\n        if self._tasks_cache and task_id in self._tasks_cache:\n            task = self._tasks_cache[task_id]\n            return {\n                \"difficulty\": task.difficulty,\n                \"repo\": task.repo,\n                \"base_commit\": task.base_commit,\n            }\n        return {}",
+            "filePath": "/home/shako/REPOS/Indie-Hacking/ai-laws-of-simplicity/experiment/harness/swe_bench.py"
+          },
+          "timestamp": "2026-03-15T11:12:21.922+00:00"
+        },
+        {
+          "type": "assistant",
+          "text": "Now I have all the specifications. Let me implement allfour tasks.",
+          "timestamp": "2026-03-15T11:12:21.922+00:00"
+        },
+        {
+          "type": "tool_use",
+          "name": "bash",
+          "input": {
+            "command": "cd /home/shako/REPOS/Indie-Hacking/ai-laws-of-simplicity && python -c \"from experiment.harness.swe_bench import SWEBenchHarness; print('OK')\"",
+            "description": "Verify SWE-bench harnessimports"
+          },
+          "timestamp": "2026-03-15T11:12:43.753+00:00"
+        },
+        {
+          "type": "tool_use",
+          "name": "bash",
+          "input": {
+            "command": "python3 -c \"from experiment.harness.swe_bench import SWEBenchHarness; print('OK')\"",
+            "description": "Verify SWE-bench harness imports with python3"
+          },
+          "timestamp": "2026-03-15T11:12:46.371+00:00"
+        },
+        {
+          "type": "tool_use",
+          "name": "bash",
+          "input": {
+            "command": "git add experiment/harness/swe_bench.py && git commit -m \"feat: add SWE-bench harness implementation\"",
+            "description": "Commit SWE-bench harness"
+          },
+          "timestamp": "2026-03-15T11:12:50.816+00:00"
+        }
+      ],
+      "total_additions": 97,
+      "total_deletions": 0,
+      "accepted_lines": 97,
+      "overriden_lines": 0
+    }
+  }
+}
