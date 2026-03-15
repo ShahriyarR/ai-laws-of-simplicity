@@ -1,0 +1,211 @@
+experiment/metrics/analyzer.py
+  0a95d79828f50230 1-257
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.11",
+  "base_commit_sha": "bd294f7e55ad0d7a4096642a38021ae5dabccbcd",
+  "prompts": {
+    "0a95d79828f50230": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_30ecdb519ffeZ5VnPvwaNgVxhz",
+        "model": "opencode-go/glm-5"
+      },
+      "human_author": "Shahriyar Rzayev <rzayev.sehriyar@gmail.com>",
+      "messages": [
+        {
+          "type": "user",
+          "text": "You are implementing Tasks 3.1 through 6.1 in one batch. Each task builds on the previous one.\n\n## Task 3.1: Implement SWE-bench Harness\n\n**Files:**\n- Create: `experiment/harness/swe_bench.py`\n\nCreate the SWEBenchHarness class that:\n- Loads tasks from SWE-bench Lite dataset using `datasets` library\n- Classifies difficulty based on patch lines: Simple (<10), Medium (10-50), Complex (>50)\n- Implements verify_solution using swebench.metrics.get_test_results\n- Caches tasks in _tasks_cache\n\n## Task 4.1: Implement HumanEval Harness\n\n**Files:**\n- Create: `experiment/harness/humaneval.py`\n\nCreate the HumanEvalHarness class that:\n- Loads tasks from `openai/humaneval` dataset\n- Classifies difficulty based on canonical solution lines\n- Implements verify_solution using subprocess to run human_eval.execution\n\n## Task 5.1: Implement Metrics Collector\n\n**Files:**\n- Create: `experiment/metrics/collector.py`\n\nCreate:\n- RunMetrics dataclass with: task_id, benchmark, condition, input_tokens, output_tokens, total_tokens, success, time_seconds, iterations, error, timestamp\n- MetricsCollector class with: start_run(), update_tokens(), increment_iteration(), end_run(), load_all_results(), to_csv()\n- Filename sanitization for task_ids (replace `/` and `:` with `_`)\n\n## Task 6.1: Implement Statistical Analyzer\n\n**Files:**\n- Create: `experiment/metrics/analyzer.py`\n\nCreate:\n- AnalysisResults dataclass\n- paired_token_test() with bootstrap CI\n- success_rate_test() using McNemar's test\n- analyze_by_difficulty() with two-way ANOVA\n- time_distribution_test() with Mann-Whitney U\n- run_full_analysis() orchestrator\n\n## Context\n\nThis builds the core experiment infrastructure:\n- Tasks 3-4: Benchmark harnesses for SWE-bench and HumanEval\n- Task 5: Metrics collection during experiment runs\n- Task 6: Statistical analysis pipeline for RQ1-RQ3\n\nWork from: /home/shako/REPOS/Indie-Hacking/ai-laws-of-simplicity\n\nRefer to the plan at `docs/superpowers/plans/2026-03-15-research-experiment-implementation.md` for exact code specifications (lines 266-658).\n\n## Your Job\n\n1. Implement all four tasks (3.1, 4.1, 5.1, 6.1)\n2. Verify imports work after each\n3. Commit after each task with appropriate message\n4. Report back with status for all four tasks",
+          "timestamp": "2026-03-15T11:12:10.985+00:00"
+        },
+        {
+          "type": "tool_use",
+          "name": "read",
+          "input": {
+            "filePath": "/home/shako/REPOS/Indie-Hacking/ai-laws-of-simplicity/docs/superpowers/plans/2026-03-15-research-experiment-implementation.md",
+            "limit": 400,
+            "offset": 266
+          },
+          "timestamp": "2026-03-15T11:12:10.990+00:00"
+        },
+        {
+          "type": "tool_use",
+          "name": "read",
+          "input": {
+            "filePath": "/home/shako/REPOS/Indie-Hacking/ai-laws-of-simplicity/experiment/harness/base.py"
+          },
+          "timestamp": "2026-03-15T11:12:10.990+00:00"
+        },
+        {
+          "type": "tool_use",
+          "name": "glob",
+          "input": {
+            "pattern": "experiment/**/*.py"
+          },
+          "timestamp": "2026-03-15T11:12:10.990+00:00"
+        },
+        {
+          "type": "assistant",
+          "text": "I'll implement Tasks 3.1 through 6.1. Let me first read the plan for exact specifications and understand the current codebasestructure.",
+          "timestamp": "2026-03-15T11:12:10.990+00:00"
+        },
+        {
+          "type": "tool_use",
+          "name": "read",
+          "input": {
+            "filePath": "/home/shako/REPOS/Indie-Hacking/ai-laws-of-simplicity/docs/superpowers/plans/2026-03-15-research-experiment-implementation.md",
+            "limit": 200,
+            "offset": 666
+          },
+          "timestamp": "2026-03-15T11:12:15.501+00:00"
+        },
+        {
+          "type": "tool_use",
+          "name": "read",
+          "input": {
+            "filePath": "/home/shako/REPOS/Indie-Hacking/ai-laws-of-simplicity/docs/superpowers/plans/2026-03-15-research-experiment-implementation.md",
+            "limit": 100,
+            "offset": 866
+          },
+          "timestamp": "2026-03-15T11:12:18.855+00:00"
+        },
+        {
+          "type": "tool_use",
+          "name": "write",
+          "input": {
+            "content": "import json\nimport random\nfrom pathlib import Path\nfrom typing import Any\n\nfrom .base import BenchmarkHarness, TaskSpec\n\n\nclass SWEBenchHarness(BenchmarkHarness):\n    \"\"\"Harness for SWE-bench Lite benchmark.\"\"\"\n    \n    def __init__(self, data_path: Path | None = None):\n        \"\"\"Initialize SWE-bench harness.\n        \n        Args:\n            data_path: Path to SWE-bench dataset (optional, downloads if not provided)\n        \"\"\"\n        self.data_path = data_path\n        self._tasks_cache: dict[str, TaskSpec] | None = None\n    \n    def _load_dataset(self) -> list[dict[str, Any]]:\n        \"\"\"Load SWE-bench Lite dataset.\"\"\"\n        from datasets import load_dataset\n        \n        dataset = load_dataset(\"princeton-nlp/SWE-bench_Lite\", split=\"test\")\n        return [item for item in dataset]\n    \n    def load_tasks(self, num_tasks: int, seed: int) -> list[TaskSpec]:\n        \"\"\"Load a random sample of SWE-bench tasks.\n        \n        Simple/Medium/Complex classification based on patches:\n        - Simple: <10 lines changed\n        - Medium: 10-50 lines changed  \n        - Complex: >50 lines changed\n        \"\"\"\n        all_tasks = self._load_dataset()\n        \n        rng = random.Random(seed)\n        sampled = rng.sample(all_tasks, min(num_tasks, len(all_tasks)))\n        \n        task_specs = []\n        for task in sampled:\n            # Estimate difficulty from patch\n            patch = task.get(\"patch\", \"\")\n            lines_changed = len(patch.split('\\n')) if patch else 0\n            \n            if lines_changed < 10:\n                difficulty = \"simple\"\n            elif lines_changed <= 50:\n                difficulty = \"medium\"\n            else:\n                difficulty = \"complex\"\n            \n            spec = TaskSpec(\n                task_id=task[\"instance_id\"],\n                benchmark=\"swe_bench_lite\",\n                prompt=task[\"problem_statement\"],\n                test_file=None,  # SWE-bench has test_patch\n                expected_solution=task.get(\"patch\"),\n                difficulty=difficulty,\n                repo=task.get(\"repo\", \"\"),\n                base_commit=task.get(\"base_commit\"),\n                problem_statement=task[\"problem_statement\"],\n            )\n            task_specs.append(spec)\n        \n        # Cache tasks outside the loop\n        self._tasks_cache = {t.task_id: t for t in task_specs}\n        \n        return task_specs\n    \n    def verify_solution(self, task: TaskSpec, solution_path: Path) -> bool:\n        \"\"\"Verify solution using SWE-bench test harness.\"\"\"\n        from swebench.metrics import get_test_results\n        \n        try:\n            # SWE-bench requires test_patch from the instance\n            # The solution_path should be a repo with the patch applied\n            results = get_test_results(\n                instance_id=task.task_id,\n                test_patch=task.expected_solution or \"\",  # Use patch from task\n                repo_path=str(solution_path),\n            )\n            return results.get(\"passed\", 0) == results.get(\"total\", 1)\n        except Exception:\n            return False\n    \n    def get_task_metadata(self, task_id: str) -> dict[str, Any]:\n        \"\"\"Get SWE-bench task metadata.\"\"\"\n        if self._tasks_cache and task_id in self._tasks_cache:\n            task = self._tasks_cache[task_id]\n            return {\n                \"difficulty\": task.difficulty,\n                \"repo\": task.repo,\n                \"base_commit\": task.base_commit,\n            }\n        return {}",
+            "filePath": "/home/shako/REPOS/Indie-Hacking/ai-laws-of-simplicity/experiment/harness/swe_bench.py"
+          },
+          "timestamp": "2026-03-15T11:12:21.922+00:00"
+        },
+        {
+          "type": "assistant",
+          "text": "Now I have all the specifications. Let me implement allfour tasks.",
+          "timestamp": "2026-03-15T11:12:21.922+00:00"
+        },
+        {
+          "type": "tool_use",
+          "name": "bash",
+          "input": {
+            "command": "cd /home/shako/REPOS/Indie-Hacking/ai-laws-of-simplicity && python -c \"from experiment.harness.swe_bench import SWEBenchHarness; print('OK')\"",
+            "description": "Verify SWE-bench harnessimports"
+          },
+          "timestamp": "2026-03-15T11:12:43.753+00:00"
+        },
+        {
+          "type": "tool_use",
+          "name": "bash",
+          "input": {
+            "command": "python3 -c \"from experiment.harness.swe_bench import SWEBenchHarness; print('OK')\"",
+            "description": "Verify SWE-bench harness imports with python3"
+          },
+          "timestamp": "2026-03-15T11:12:46.371+00:00"
+        },
+        {
+          "type": "tool_use",
+          "name": "bash",
+          "input": {
+            "command": "git add experiment/harness/swe_bench.py && git commit -m \"feat: add SWE-bench harness implementation\"",
+            "description": "Commit SWE-bench harness"
+          },
+          "timestamp": "2026-03-15T11:12:50.816+00:00"
+        },
+        {
+          "type": "tool_use",
+          "name": "write",
+          "input": {
+            "content": "import json\nimport random\nfrom pathlib import Path\nfrom typing import Any\n\nfrom .base import BenchmarkHarness, TaskSpec\n\n\nclass HumanEvalHarness(BenchmarkHarness):\n    \"\"\"Harness for HumanEval benchmark.\"\"\"\n    \n    def __init__(self, data_path: Path | None = None):\n        \"\"\"Initialize HumanEval harness.\n        \n        Args:\n            data_path: Path to HumanEval dataset (optional, downloads if not provided)\n        \"\"\"\n        self.data_path = data_path\n        self._tasks_cache: dict[str, TaskSpec] | None = None\n    \n    def _load_dataset(self) -> list[dict[str, Any]]:\n        \"\"\"Load HumanEval dataset.\"\"\"\n        from datasets import load_dataset\n        \n        dataset = load_dataset(\"openai/humaneval\", split=\"test\")\n        return [item for item in dataset]\n    \n    def load_tasks(self, num_tasks: int, seed: int) -> list[TaskSpec]:\n        \"\"\"Load a random sample of HumanEval tasks.\n        \n        Difficulty based on expected solution length:\n        - Simple: <10 lines\n        - Medium: 10-50 lines\n        - Complex: >50 lines (rare in HumanEval)\n        \"\"\"\n        all_tasks = self._load_dataset()\n        \n        rng = random.Random(seed)\n        sampled = rng.sample(all_tasks, min(num_tasks, len(all_tasks)))\n        \n        task_specs = []\n        for task in sampled:\n            # HumanEval tasks are mostly simple\n            # Estimate from canonical solution if available\n            canonical = task.get(\"canonical_solution\", \"\")\n            lines = len(canonical.split('\\n')) if canonical else 10\n            \n            if lines < 10:\n                difficulty = \"simple\"\n            elif lines <= 50:\n                difficulty = \"medium\"\n            else:\n                difficulty = \"complex\"\n            \n            spec = TaskSpec(\n                task_id=task[\"task_id\"],\n                benchmark=\"human_eval\",\n                prompt=task[\"prompt\"],\n                test_file=None,\n                expected_solution=canonical,\n                difficulty=difficulty,\n                function_signature=task[\"prompt\"].split('\\n')[0],\n                test_cases=None,  # HumanEval uses test column in dataset\n            )\n            task_specs.append(spec)\n        \n        self._tasks_cache = {t.task_id: t for t in task_specs}\n        return task_specs\n    \n    def verify_solution(self, task: TaskSpec, solution_path: Path) -> bool:\n        \"\"\"Verify solution using HumanEval test runner.\"\"\"\n        import subprocess\n        \n        try:\n            # HumanEval uses exec-based testing\n            result = subprocess.run(\n                [\"python\", \"-m\", \"human_eval.execution\", str(solution_path)],\n                capture_output=True,\n                text=True,\n                timeout=30,\n            )\n            return result.returncode == 0\n        except Exception:\n            return False\n    \n    def get_task_metadata(self, task_id: str) -> dict[str, Any]:\n        \"\"\"Get HumanEval task metadata.\"\"\"\n        if self._tasks_cache and task_id in self._tasks_cache:\n            task = self._tasks_cache[task_id]\n            return {\n                \"difficulty\": task.difficulty,\n                \"function_signature\": task.function_signature,\n            }\n        return {}",
+            "filePath": "/home/shako/REPOS/Indie-Hacking/ai-laws-of-simplicity/experiment/harness/humaneval.py"
+          },
+          "timestamp": "2026-03-15T11:12:53.130+00:00"
+        },
+        {
+          "type": "tool_use",
+          "name": "bash",
+          "input": {
+            "command": "python3 -c \"from experiment.harness.humaneval import HumanEvalHarness; print('OK')\"",
+            "description": "Verify HumanEval harness imports"
+          },
+          "timestamp": "2026-03-15T11:13:04.871+00:00"
+        },
+        {
+          "type": "tool_use",
+          "name": "bash",
+          "input": {
+            "command": "git add experiment/harness/humaneval.py && git commit -m \"feat: add HumanEval harness implementation\"",
+            "description": "Commit HumanEval harness"
+          },
+          "timestamp": "2026-03-15T11:13:07.819+00:00"
+        },
+        {
+          "type": "tool_use",
+          "name": "write",
+          "input": {
+            "content": "import json\nimport time\nfrom dataclasses import dataclass, asdict\nfrom pathlib import Path\nfrom typing import Any\n\n\n@dataclass\nclass RunMetrics:\n    \"\"\"Collected metrics for a single agent run.\"\"\"\n    \n    task_id: str\n    benchmark: str\n    condition: str\n    \n    # Primary metrics\n    input_tokens: int\n    output_tokens: int\n    total_tokens: int\n    \n    # Secondary metrics\n    success: bool\n    time_seconds: float\n    iterations: int\n    \n    # Metadata\n    error: str | None\n    timestamp: str\n    \n    def to_json(self) -> dict[str, Any]:\n        \"\"\"Convert to JSON-serializable dict.\"\"\"\n        return asdict(self)\n\n\nclass MetricsCollector:\n    \"\"\"Collects and stores experiment metrics.\"\"\"\n    \n    def __init__(self, output_dir: Path):\n        \"\"\"Initialize collector.\n        \n        Args:\n            output_dir: Directory to store JSON logs\n        \"\"\"\n        self.output_dir = output_dir\n        self.output_dir.mkdir(parents=True, exist_ok=True)\n    \n    def start_run(self, task_id: str, benchmark: str, condition: str) -> dict[str, Any]:\n        \"\"\"Start a new run, return context for tracking.\n        \n        Returns:\n            Context dict with start_time\n        \"\"\"\n        return {\n            \"task_id\": task_id,\n            \"benchmark\": benchmark,\n            \"condition\": condition,\n            \"start_time\": time.time(),\n            \"start_timestamp\": time.strftime(\"%Y-%m-%dT%H:%M:%SZ\", time.gmtime()),\n            \"iterations\": 0,\n            \"input_tokens\": 0,\n            \"output_tokens\": 0,\n        }\n    \n    def update_tokens(self, ctx: dict, input_tokens: int, output_tokens: int) -> None:\n        \"\"\"Update token counts in context.\"\"\"\n        ctx[\"input_tokens\"] += input_tokens\n        ctx[\"output_tokens\"] += output_tokens\n    \n    def increment_iteration(self, ctx: dict) -> None:\n        \"\"\"Increment iteration count.\"\"\"\n        ctx[\"iterations\"] += 1\n    \n    def end_run(\n        self,\n        ctx: dict,\n        success: bool,\n        error: str | None = None,\n    ) -> RunMetrics:\n        \"\"\"End run and return final metrics.\n        \n        Args:\n            ctx: Run context from start_run\n            success: Whether task succeeded\n            error: Error message if failed\n            \n        Returns:\n            Final RunMetrics object\n        \"\"\"\n        end_time = time.time()\n        \n        metrics = RunMetrics(\n            task_id=ctx[\"task_id\"],\n            benchmark=ctx[\"benchmark\"],\n            condition=ctx[\"condition\"],\n            input_tokens=ctx[\"input_tokens\"],\n            output_tokens=ctx[\"output_tokens\"],\n            total_tokens=ctx[\"input_tokens\"] + ctx[\"output_tokens\"],\n            success=success,\n            time_seconds=end_time - ctx[\"start_time\"],\n            iterations=ctx[\"iterations\"],\n            error=error,\n            timestamp=ctx[\"start_timestamp\"],\n        )\n        \n        # Save to JSON (sanitize task_id for filename safety)\n        safe_task_id = ctx[\"task_id\"].replace(\"/\", \"_\").replace(\":\", \"_\")\n        output_file = self.output_dir / f\"{safe_task_id}_{ctx['condition']}.json\"\n        with open(output_file, \"w\") as f:\n            json.dump(metrics.to_json(), f, indent=2)\n        \n        return metrics\n    \n    def load_all_results(self) -> list[RunMetrics]:\n        \"\"\"Load all results from output directory.\"\"\"\n        results = []\n        for json_file in self.output_dir.glob(\"*.json\"):\n            with open(json_file) as f:\n                data = json.load(f)\n                results.append(RunMetrics(**data))\n        return results\n    \n    def to_csv(self, output_path: Path) -> None:\n        \"\"\"Export all results to CSV.\"\"\"\n        import pandas as pd\n        \n        results = self.load_all_results()\n        df = pd.DataFrame([r.to_json() for r in results])\n        df.to_csv(output_path, index=False)",
+            "filePath": "/home/shako/REPOS/Indie-Hacking/ai-laws-of-simplicity/experiment/metrics/collector.py"
+          },
+          "timestamp": "2026-03-15T11:13:10.649+00:00"
+        },
+        {
+          "type": "tool_use",
+          "name": "bash",
+          "input": {
+            "command": "python3 -c \"from experiment.metrics.collector import MetricsCollector, RunMetrics; print('OK')\"",
+            "description": "Verify metrics collector imports"
+          },
+          "timestamp": "2026-03-15T11:13:31.261+00:00"
+        },
+        {
+          "type": "tool_use",
+          "name": "bash",
+          "input": {
+            "command": "git add experiment/metrics/collector.py && git commit -m \"feat: add metrics collection utilities\"",
+            "description": "Commit metrics collector"
+          },
+          "timestamp": "2026-03-15T11:13:39.355+00:00"
+        },
+        {
+          "type": "tool_use",
+          "name": "write",
+          "input": {
+            "content": "from dataclasses import dataclass\nfrom pathlib import Path\nfrom typing import Any\n\nimport numpy as np\nimport pandas as pd\nfrom scipy import stats\n\n\n@dataclass\nclass AnalysisResults:\n    \"\"\"Results from statistical analysis.\"\"\"\n    \n    # RQ1: Token reduction\n    token_mean_control: float\n    token_mean_treatment: float\n    token_mean_diff: float\n    token_p_value: float\n    token_cohens_d: float\n    token_ci_lower: float\n    token_ci_upper: float\n    \n    # RQ2: Success rate\n    success_rate_control: float\n    success_rate_treatment: float\n    success_p_value: float  # McNemar's test\n    \n    # RQ3: By difficulty\n    token_diff_by_difficulty: dict[str, Any]\n    \n    # Time distribution\n    time_median_control: float\n    time_median_treatment: float\n    time_effect_size: float  # Rank-biserial correlation\n\n\ndef load_results(csv_path: Path) -> pd.DataFrame:\n    \"\"\"Load results from CSV.\"\"\"\n    return pd.read_csv(csv_path)\n\n\ndef paired_token_test(df: pd.DataFrame) -> tuple[float, float, float, float, float]:\n    \"\"\"Run paired t-test for token reduction (RQ1).\n    \n    Returns:\n        Tuple of (mean_diff, p_value, cohens_d, ci_lower, ci_upper)\n    \"\"\"\n    control = df[df[\"condition\"] == \"control\"][\"total_tokens\"]\n    treatment = df[df[\"condition\"] == \"treatment\"][\"total_tokens\"]\n    \n    # Paired t-test (tasks are paired)\n    t_stat, p_value = stats.ttest_rel(control, treatment)\n    \n    # Effect size (Cohen's d)\n    mean_diff = (control - treatment).mean()\n    pooled_std = np.sqrt((control.std()**2 + treatment.std()**2) / 2)\n    cohens_d = mean_diff / pooled_std if pooled_std > 0 else 0\n    \n    # Bootstrap 95% CI for mean difference\n    diffs = control - treatment\n    n_bootstrap = 10000\n    rng = np.random.default_rng(42)\n    bootstrap_samples = rng.choice(diffs, size=(n_bootstrap, len(diffs)), replace=True)\n    bootstrap_means = bootstrap_samples.mean(axis=1)\n    ci_lower = np.percentile(bootstrap_means, 2.5)\n    ci_upper = np.percentile(bootstrap_means, 97.5)\n    \n    return mean_diff, p_value, cohens_d, ci_lower, ci_upper\n\n\ndef success_rate_test(df: pd.DataFrame) -> tuple[float, float, float]:\n    \"\"\"Run McNemar's test for success rate (RQ2).\n    \n    Returns:\n        Tuple of (success_rate_control, success_rate_treatment, p_value)\n    \"\"\"\n    # Create contingency table\n    pivot = df.pivot_table(\n        index=\"task_id\",\n        columns=\"condition\",\n        values=\"success\",\n        aggfunc=\"first\"\n    )\n    \n    # McNemar's test requires paired binary outcomes\n    # Count discordant pairs\n    control_success = pivot[\"control\"].astype(int)\n    treatment_success = pivot[\"treatment\"].astype(int)\n    \n    # Contingency table\n    #                    Treatment\n    # Control        Success    Failure\n    # Success        a          b\n    # Failure        c          d\n    \n    a = ((control_success == 1) & (treatment_success == 1)).sum()\n    b = ((control_success == 1) & (treatment_success == 0)).sum()\n    c = ((control_success == 0) & (treatment_success == 1)).sum()\n    d = ((control_success == 0) & (treatment_success == 0)).sum()\n    \n    # McNemar's test (exact binomial for small samples)\n    from statsmodels.stats.contingency_tables import mcnemar\n    table = np.array([[a, b], [c, d]])\n    result = mcnemar(table, exact=True)\n    \n    success_rate_control = control_success.mean()\n    success_rate_treatment = treatment_success.mean()\n    \n    return success_rate_control, success_rate_treatment, result.pvalue\n\n\ndef analyze_by_difficulty(df: pd.DataFrame, metadata: dict[str, Any]) -> dict[str, Any]:\n    \"\"\"Analyze token reduction by task difficulty (RQ3).\n    \n    Two-way ANOVA: Condition × Complexity\n    Post-hoc pairwise comparisons with Bonferroni correction.\n    \n    Returns:\n        Dict with 'mean_diffs', 'anova_results', and 'posthoc' keys\n    \"\"\"\n    from statsmodels.stats.anova import anova_lm\n    from statsmodels.formula.api import ols\n    from statsmodels.stats.multicomp import pairwise_tukeyhsd\n    \n    # Add difficulty column to dataframe\n    df_with_diff = df.copy()\n    df_with_diff[\"difficulty\"] = df_with_diff[\"task_id\"].map(\n        lambda tid: metadata.get(tid, {}).get(\"difficulty\", \"unknown\")\n    )\n    \n    results = {\"mean_diffs\": {}, \"anova_results\": None, \"posthoc\": None}\n    \n    # Mean difference by difficulty\n    for difficulty in [\"simple\", \"medium\", \"complex\"]:\n        task_ids = [\n            tid for tid, meta in metadata.items()\n            if meta.get(\"difficulty\") == difficulty\n        ]\n        \n        if not task_ids:\n            continue\n        \n        subset = df_with_diff[df_with_diff[\"task_id\"].isin(task_ids)]\n        if len(subset) < 10:\n            continue\n        \n        control = subset[subset[\"condition\"] == \"control\"][\"total_tokens\"]\n        treatment = subset[subset[\"condition\"] == \"treatment\"][\"total_tokens\"]\n        \n        results[\"mean_diffs\"][difficulty] = (control.mean() - treatment.mean())\n    \n    # Two-way ANOVA (if we have enough data for each difficulty)\n    valid_difficulties = [d for d in [\"simple\", \"medium\", \"complex\"] \n                          if d in results[\"mean_diffs\"]]\n    \n    if len(valid_difficulties) >= 2:\n        try:\n            # Filter to valid difficulties only\n            df_anova = df_with_diff[df_with_diff[\"difficulty\"].isin(valid_difficulties)]\n            \n            # Two-way ANOVA: total_tokens ~ C(condition) + C(difficulty) + C(condition):C(difficulty)\n            model = ols(\n                'total_tokens ~ C(condition) + C(difficulty) + C(condition):C(difficulty)',\n                data=df_anova\n            ).fit()\n            anova_table = anova_lm(model, typ=2)\n            results[\"anova_results\"] = {\n                \"condition_pvalue\": anova_table.loc[\"C(condition)\", \"PR(>F)\"],\n                \"difficulty_pvalue\": anova_table.loc[\"C(difficulty)\", \"PR(>F)\"],\n                \"interaction_pvalue\": anova_table.loc[\"C(condition):C(difficulty)\", \"PR(>F)\"],\n            }\n            \n            # Post-hoc with Bonferroni correction\n            tukey = pairwise_tukeyhsd(\n                df_anova[\"total_tokens\"],\n                df_anova[\"condition\"] + \"_\" + df_anova[\"difficulty\"],\n                alpha=0.05 / 3  # Bonferroni correction\n            )\n            results[\"posthoc\"] = {\n                \"groups\": tukey.groupsunique.tolist(),\n                \"reject\": tukey.reject.tolist(),\n            }\n        except Exception:\n            # ANOVA may fail with insufficient data\n            pass\n    \n    return results\n\n\ndef time_distribution_test(df: pd.DataFrame) -> tuple[float, float, float]:\n    \"\"\"Run Mann-Whitney U test for time distribution.\n    \n    Returns:\n        Tuple of (median_control, median_treatment, effect_size)\n    \"\"\"\n    control = df[df[\"condition\"] == \"control\"][\"time_seconds\"]\n    treatment = df[df[\"condition\"] == \"treatment\"][\"time_seconds\"]\n    \n    median_control = control.median()\n    median_treatment = treatment.median()\n    \n    # Mann-Whitney U test\n    u_stat, _ = stats.mannwhitneyu(control, treatment, alternative=\"two-sided\")\n    \n    # Rank-biserial correlation (effect size)\n    n1 = len(control)\n    n2 = len(treatment)\n    effect_size = 1 - (2 * u_stat) / (n1 * n2)\n    \n    return median_control, median_treatment, effect_size\n\n\ndef run_full_analysis(results_csv: Path, metadata: dict[str, Any]) -> AnalysisResults:\n    \"\"\"Run complete statistical analysis pipeline.\n    \n    Args:\n        results_csv: Path to results CSV\n        metadata: Task metadata dict mapping task_id to difficulty\n        \n    Returns:\n        AnalysisResults with all computed statistics\n    \"\"\"\n    df = load_results(results_csv)\n    \n    # RQ1: Token reduction\n    mean_diff, p_token, d, ci_lo, ci_hi = paired_token_test(df)\n    \n    control = df[df[\"condition\"] == \"control\"][\"total_tokens\"]\n    treatment = df[df[\"condition\"] == \"treatment\"][\"total_tokens\"]\n    \n    # RQ2: Success rate\n    sr_ctrl, sr_treat, p_success = success_rate_test(df)\n    \n    # RQ3: By difficulty\n    diff_breakdown = analyze_by_difficulty(df, metadata)\n    \n    # Time distribution\n    time_ctrl, time_treat, time_eff = time_distribution_test(df)\n    \n    return AnalysisResults(\n        token_mean_control=control.mean(),\n        token_mean_treatment=treatment.mean(),\n        token_mean_diff=mean_diff,\n        token_p_value=p_token,\n        token_cohens_d=d,\n        token_ci_lower=ci_lo,\n        token_ci_upper=ci_hi,\n        success_rate_control=sr_ctrl,\n        success_rate_treatment=sr_treat,\n        success_p_value=p_success,\n        token_diff_by_difficulty=diff_breakdown,\n        time_median_control=time_ctrl,\n        time_median_treatment=time_treat,\n        time_effect_size=time_eff,\n    )",
+            "filePath": "/home/shako/REPOS/Indie-Hacking/ai-laws-of-simplicity/experiment/metrics/analyzer.py"
+          },
+          "timestamp": "2026-03-15T11:13:50.194+00:00"
+        },
+        {
+          "type": "tool_use",
+          "name": "bash",
+          "input": {
+            "command": "python3 -c \"from experiment.metrics.analyzer import run_full_analysis; print('OK')\"",
+            "description": "Verify analyzer imports"
+          },
+          "timestamp": "2026-03-15T11:14:33.179+00:00"
+        },
+        {
+          "type": "tool_use",
+          "name": "bash",
+          "input": {
+            "command": "pip3 install numpy pandas scipy statsmodels --quiet && python3 -c \"from experiment.metrics.analyzer import run_full_analysis; print('OK')\"",
+            "description": "Install deps and verify analyzer imports"
+          },
+          "timestamp": "2026-03-15T11:14:38.466+00:00"
+        },
+        {
+          "type": "tool_use",
+          "name": "bash",
+          "input": {
+            "command": "git add experiment/metrics/analyzer.py && git commit -m \"feat: add statistical analysis functions\"",
+            "description": "Commit statistical analyzer"
+          },
+          "timestamp": "2026-03-15T11:14:49.126+00:00"
+        }
+      ],
+      "total_additions": 257,
+      "total_deletions": 0,
+      "accepted_lines": 257,
+      "overriden_lines": 0
+    }
+  }
+}
