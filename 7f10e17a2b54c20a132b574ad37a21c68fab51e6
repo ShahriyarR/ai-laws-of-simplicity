@@ -1,0 +1,230 @@
+experiment/README.md
+  a77b0c692815247e 1-108
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.11",
+  "base_commit_sha": "7f10e17a2b54c20a132b574ad37a21c68fab51e6",
+  "prompts": {
+    "a77b0c692815247e": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_30ec71f79ffeiCv24OCv70QBTX",
+        "model": "opencode-go/glm-5"
+      },
+      "human_author": "Shahriyar Rzayev <rzayev.sehriyar@gmail.com>",
+      "messages": [
+        {
+          "type": "user",
+          "text": "You are implementing Tasks 7.1 through 11.1 in one batch. These are the final tasks for the experiment runner.\n\n## Task 7.1: Implement Isolation Utilities\n\n**Files:** Create `experiment/utils/isolation.py`\n\nCreate IsolatedRunner class:\n- create_fresh_context() - creates temp dir, sets OPENCODE_NO_CACHE=1\n- load_skill(ctx, skill_path) - appends to skills_loaded\n- run_agent(ctx, task_prompt, max_tokens, timeout) - runs agent subprocess, extracts tokens\n- _extract_token_count(log_text, token_type) - parses agent logs for token counts\n- cleanup(ctx) - removes temp dir\n\n## Task 8.1: Implement Experiment Orchestrator\n\n**Files:** Create `experiment/runner.py`\n\nCreate ExperimentRunner class:\n- __init__(config) - initializes harnesses, runner, collector\n- run() - runs all benchmarks, collects results\n- _run_task(task, harness) - runs task in both conditions with counterbalancing (hash(task_id) % 2)\n- analyze() - runs statistical analysis, saves analysis.json\n- main() - entrypoint\n\nCounterbalancing: `if hash(task.task_id) % 2 == 0: conditions = [\"control\", \"treatment\"] else: conditions = [\"treatment\", \"control\"]`\n\n## Task 9.1: Create Entry Scripts\n\n**Files:** Create `scripts/run_experiment.sh` and `scripts/analyze_results.py`\n\nrun_experiment.sh:\n- Check Python version\n- Install dependencies\n- Create output directories\n- Run `python -m experiment.runner`\n\nanalyze_results.py:\n- Load results from CSV\n- Call runner.analyze()\n- Generate figures with matplotlib/seaborn (token distribution, time distribution)\n\n## Task 9.2: Create Docker Configuration\n\n**Files:** Create `Dockerfile`\n\n- FROM python:3.11-slim\n- Install git, curl\n- COPY requirements.txt, install deps\n- COPY experiment/, scripts/, skills/\n- ENTRYPOINT python -m experiment.runner\n\n## Task 10.1: Create Experiment Documentation\n\n**Files:** Create `experiment/README.md`\n\nDocument quick start, experiment design, metrics, statistical analysis, directory structure, reproducibility.\n\n## Task 11.1: Smoke Test\n\n- Verify all imports work: run import test for all modules\n- Create mock data test script (fix total_tokens = input_tokens + output_tokens)\n- Verify imports complete\n\n## Context\n\nThis completes the experiment runner. The isobation utilities provide fresh contexts for each run. The orchestrator coordinates A/B experiments across benchmarks. Entry scripts provide user-facing commands. Docker ensures reproducibility.\n\nWork from: /home/shako/REPOS/Indie-Hacking/ai-laws-of-simplicity\n\nRefer to the plan at `docs/superpowers/plans/2026-03-15-research-experiment-implementation.md` for exact code specifications.\n\n## Your Job\n\n1. Implement all five tasks (7.1-11.1)\n2. Verify imports and tests work\n3. Commit each task\n4. Report back with status for all tasks",
+          "timestamp": "2026-03-15T11:19:22.507+00:00"
+        },
+        {
+          "type": "tool_use",
+          "name": "read",
+          "input": {
+            "filePath": "/home/shako/REPOS/Indie-Hacking/ai-laws-of-simplicity/docs/superpowers/plans/2026-03-15-research-experiment-implementation.md"
+          },
+          "timestamp": "2026-03-15T11:19:22.512+00:00"
+        },
+        {
+          "type": "tool_use",
+          "name": "glob",
+          "input": {
+            "pattern": "experiment/**/*.py"
+          },
+          "timestamp": "2026-03-15T11:19:22.512+00:00"
+        },
+        {
+          "type": "assistant",
+          "text": "I'll implement Tasks 7.1 through 11.1. Let me start by reading the plan and checking the current codebase structure.",
+          "timestamp": "2026-03-15T11:19:22.512+00:00"
+        },
+        {
+          "type": "tool_use",
+          "name": "read",
+          "input": {
+            "filePath": "/home/shako/REPOS/Indie-Hacking/ai-laws-of-simplicity/experiment/config.py"
+          },
+          "timestamp": "2026-03-15T11:19:29.015+00:00"
+        },
+        {
+          "type": "tool_use",
+          "name": "glob",
+          "input": {
+            "pattern": "scripts/**/*"
+          },
+          "timestamp": "2026-03-15T11:19:29.015+00:00"
+        },
+        {
+          "type": "tool_use",
+          "name": "glob",
+          "input": {
+            "pattern": "Dockerfile"
+          },
+          "timestamp": "2026-03-15T11:19:29.015+00:00"
+        },
+        {
+          "type": "assistant",
+          "text": "Let me check the existing files and directories needed:",
+          "timestamp": "2026-03-15T11:19:29.015+00:00"
+        },
+        {
+          "type": "tool_use",
+          "name": "write",
+          "input": {
+            "content": "# experiment/utils/isolation.py\nimport os\nimport re\nimport shutil\nimport subprocess\nimport tempfile\nfrom pathlib import Path\nfrom typing import Any\n\n\nclass IsolatedRunner:\n    \"\"\"Runs agent in isolated environment to ensure fresh context.\"\"\"\n\n    def __init__(\n        self,\n        agent_command: str = \"opencode\",\n        skills_dir: Path | None = None,\n        container_image: str | None = None,\n    ):\n        \"\"\"Initialize isolated runner.\n\n        Args:\n            agent_command: Command to invoke the agent\n            skills_dir: Directory containing skill files\n            container_image: Docker image for isolation (optional)\n        \"\"\"\n        self.agent_command = agent_command\n        self.skills_dir = skills_dir\n        self.container_image = container_image\n\n    def create_fresh_context(self) -> dict[str, Any]:\n        \"\"\"Create a fresh context for agent run.\n\n        Returns:\n            Context dict with temporary directory and environment\n        \"\"\"\n        temp_dir = tempfile.mkdtemp(prefix=\"experiment_run_\")\n\n        env = os.environ.copy()\n        env[\"OPENCODE_CONTEXT_DIR\"] = temp_dir\n        env[\"OPENCODE_NO_CACHE\"] = \"1\"\n\n        return {\n            \"temp_dir\": temp_dir,\n            \"env\": env,\n            \"skills_loaded\": [],\n        }\n\n    def load_skill(self, ctx: dict, skill_path: Path) -> None:\n        \"\"\"Load a skill into the context.\n\n        Args:\n            ctx: Context from create_fresh_context\n            skill_path: Path to skill markdown file\n        \"\"\"\n        ctx[\"skills_loaded\"].append(str(skill_path))\n\n    def run_agent(\n        self,\n        ctx: dict,\n        task_prompt: str,\n        max_tokens: int = 100000,\n        timeout: int = 600,\n    ) -> dict[str, Any]:\n        \"\"\"Run agent with specified context and prompt.\n\n        Args:\n            ctx: Context from create_fresh_context\n            task_prompt: The task to solve\n            max_tokens: Maximum tokens to generate\n            timeout: Timeout in seconds\n\n        Returns:\n            Dict with input_tokens, output_tokens, output, iterations\n        \"\"\"\n        cmd = [self.agent_command]\n\n        for skill_path in ctx[\"skills_loaded\"]:\n            cmd.extend([\"--skill\", str(skill_path)])\n\n        result = subprocess.run(\n            cmd,\n            input=task_prompt,\n            capture_output=True,\n            text=True,\n            timeout=timeout,\n            env=ctx[\"env\"],\n            cwd=ctx[\"temp_dir\"],\n        )\n\n        input_tokens = self._extract_token_count(result.stderr, \"input\")\n        output_tokens = self._extract_token_count(result.stderr, \"output\")\n        iterations = result.stderr.count(\"ITERATION_START\")\n\n        return {\n            \"input_tokens\": input_tokens,\n            \"output_tokens\": output_tokens,\n            \"output\": result.stdout,\n            \"iterations\": iterations,\n            \"return_code\": result.returncode,\n        }\n\n    def _extract_token_count(self, log_text: str, token_type: str) -> int:\n        \"\"\"Extract token count from agent logs.\n\n        This is a placeholder - actual implementation depends on\n        agent's log format.\n        \"\"\"\n        pattern = rf\"{token_type}_tokens:\\s*(\\d+)\"\n        match = re.search(pattern, log_text)\n        if match:\n            return int(match.group(1))\n        return 0\n\n    def cleanup(self, ctx: dict) -> None:\n        \"\"\"Clean up temporary context.\"\"\"\n        if Path(ctx[\"temp_dir\"]).exists():\n            shutil.rmtree(ctx[\"temp_dir\"])",
+            "filePath": "/home/shako/REPOS/Indie-Hacking/ai-laws-of-simplicity/experiment/utils/isolation.py"
+          },
+          "timestamp": "2026-03-15T11:19:35.672+00:00"
+        },
+        {
+          "type": "tool_use",
+          "name": "write",
+          "input": {
+            "content": "# experiment/runner.py\nimport json\nfrom pathlib import Path\nfrom typing import Any\n\nfrom experiment.config import DEFAULT_CONFIG, ExperimentConfig\nfrom experiment.harness.base import TaskSpec\nfrom experiment.harness.humaneval import HumanEvalHarness\nfrom experiment.harness.swe_bench import SWEBenchHarness\nfrom experiment.metrics.collector import MetricsCollector\nfrom experiment.utils.isolation import IsolatedRunner\n\n\nclass ExperimentRunner:\n    \"\"\"Orchestrates A/B experiments across benchmarks.\"\"\"\n\n    def __init__(self, config: ExperimentConfig | None = None):\n        \"\"\"Initialize experiment runner.\n\n        Args:\n            config: Experiment configuration (uses default if not provided)\n        \"\"\"\n        self.config = config or DEFAULT_CONFIG\n        self.config.raw_data_dir.mkdir(parents=True, exist_ok=True)\n        self.config.results_dir.mkdir(parents=True, exist_ok=True)\n\n        self.harnesses: dict[str, Any] = {}\n        if \"swe_bench_lite\" in self.config.benchmarks:\n            self.harnesses[\"swe_bench_lite\"] = SWEBenchHarness()\n        if \"human_eval\" in self.config.benchmarks:\n            self.harnesses[\"human_eval\"] = HumanEvalHarness()\n\n        self.runner = IsolatedRunner(\n            agent_command=\"opencode\",\n            skills_dir=Path(\"skills\"),\n        )\n        self.collector = MetricsCollector(self.config.raw_data_dir)\n\n        self.task_metadata: dict[str, dict[str, Any]] = {}\n\n    def run(self) -> None:\n        \"\"\"Run the full experiment.\"\"\"\n        print(f\"Starting experiment with config: {self.config}\")\n\n        for benchmark_name in self.config.benchmarks:\n            print(f\"\\n=== Running {benchmark_name} ===\")\n            harness = self.harnesses[benchmark_name]\n\n            tasks = harness.load_tasks(\n                self.config.num_tasks_per_benchmark,\n                self.config.random_seed,\n            )\n            print(f\"Loaded {len(tasks)} tasks\")\n\n            for task in tasks:\n                self.task_metadata[task.task_id] = {\n                    \"benchmark\": task.benchmark,\n                    \"difficulty\": task.difficulty,\n                }\n\n            for i, task in enumerate(tasks, 1):\n                print(f\"\\n[{i}/{len(tasks)}] Task: {task.task_id}\")\n                self._run_task(task, harness)\n\n        print(\"\\n=== Aggregating results ===\")\n        self.collector.to_csv(\n            self.config.results_dir / \"aggregate_results.csv\"\n        )\n\n        with open(self.config.results_dir / \"task_metadata.json\", \"w\") as f:\n            json.dump(self.task_metadata, f, indent=2)\n\n        print(f\"Results saved to {self.config.results_dir}\")\n\n    def _run_task(self, task: TaskSpec, harness: Any) -> None:\n        \"\"\"Run a single task in both conditions.\n\n        Uses counterbalanced design: hash(task_id) % 2 determines condition order.\n        \"\"\"\n        if hash(task.task_id) % 2 == 0:\n            conditions = [\"control\", \"treatment\"]\n        else:\n            conditions = [\"treatment\", \"control\"]\n\n        solution_paths = {}\n\n        for condition in conditions:\n            print(f\"  Running {condition}...\")\n\n            ctx = self.runner.create_fresh_context()\n\n            if condition == \"treatment\":\n                for skill_path in self.config.treatment_skills:\n                    self.runner.load_skill(ctx, skill_path)\n\n            metrics_ctx = self.collector.start_run(\n                task.task_id,\n                task.benchmark,\n                condition,\n            )\n\n            try:\n                result = self.runner.run_agent(\n                    ctx,\n                    task.prompt,\n                    timeout=self.config.timeout_seconds,\n                )\n\n                self.collector.update_tokens(\n                    metrics_ctx,\n                    result[\"input_tokens\"],\n                    result[\"output_tokens\"],\n                )\n                for _ in range(result[\"iterations\"]):\n                    self.collector.increment_iteration(metrics_ctx)\n\n                output_dir = Path(ctx[\"temp_dir\"]) / \"output\"\n                output_dir.mkdir(exist_ok=True)\n                solution_path = output_dir / \"solution\"\n                solution_path.write_text(result[\"output\"])\n                solution_paths[condition] = solution_path\n\n                try:\n                    success = harness.verify_solution(task, solution_path)\n                except Exception as verify_error:\n                    print(f\"  Verification error: {verify_error}\")\n                    success = False\n\n                self.collector.end_run(metrics_ctx, success=success)\n\n            except Exception as e:\n                print(f\"  ERROR: {e}\")\n                self.collector.end_run(metrics_ctx, success=False, error=str(e))\n\n            finally:\n                self.runner.cleanup(ctx)\n\n    def analyze(self) -> dict[str, Any]:\n        \"\"\"Run statistical analysis on collected results.\"\"\"\n        from experiment.metrics.analyzer import run_full_analysis\n\n        results_csv = self.config.results_dir / \"aggregate_results.csv\"\n        metadata_json = self.config.results_dir / \"task_metadata.json\"\n\n        with open(metadata_json) as f:\n            metadata = json.load(f)\n\n        results = run_full_analysis(results_csv, metadata)\n\n        return {\n            \"token_analysis\": {\n                \"mean_control\": results.token_mean_control,\n                \"mean_treatment\": results.token_mean_treatment,\n                \"mean_diff\": results.token_mean_diff,\n                \"p_value\": results.token_p_value,\n                \"cohens_d\": results.token_cohens_d,\n                \"ci_95\": [results.token_ci_lower, results.token_ci_upper],\n            },\n            \"success_analysis\": {\n                \"rate_control\": results.success_rate_control,\n                \"rate_treatment\": results.success_rate_treatment,\n                \"p_value\": results.success_p_value,\n            },\n            \"difficulty_analysis\": results.token_diff_by_difficulty,\n            \"time_analysis\": {\n                \"median_control\": results.time_median_control,\n                \"median_treatment\": results.time_median_treatment,\n                \"effect_size\": results.time_effect_size,\n            },\n        }\n\n\ndef main():\n    \"\"\"Entry point for experiment runner.\"\"\"\n    runner = ExperimentRunner()\n    runner.run()\n    analysis = runner.analyze()\n\n    print(\"\\n=== Analysis Summary ===\")\n    print(f\"Token reduction: {analysis['token_analysis']['mean_diff']:.0f} tokens\")\n    print(f\"  Control: {analysis['token_analysis']['mean_control']:.0f}\")\n    print(f\"  Treatment: {analysis['token_analysis']['mean_treatment']:.0f}\")\n    print(f\"  p-value: {analysis['token_analysis']['p_value']:.4f}\")\n    print(f\"  Cohen's d: {analysis['token_analysis']['cohens_d']:.3f}\")\n\n    print(f\"\\nSuccess rate:\")\n    print(f\"  Control: {analysis['success_analysis']['rate_control']:.2%}\")\n    print(f\"  Treatment: {analysis['success_analysis']['rate_treatment']:.2%}\")\n\n    print(f\"\\nTime (median):\")\n    print(f\"  Control: {analysis['time_analysis']['median_control']:.1f}s\")\n    print(f\"  Treatment: {analysis['time_analysis']['median_treatment']:.1f}s\")\n\n    with open(runner.config.results_dir / \"analysis.json\", \"w\") as f:\n        json.dump(analysis, f, indent=2)\n\n    print(f\"\\nFull analysis saved to {runner.config.results_dir / 'analysis.json'}\")\n\n\nif __name__ == \"__main__\":\n    main()",
+            "filePath": "/home/shako/REPOS/Indie-Hacking/ai-laws-of-simplicity/experiment/runner.py"
+          },
+          "timestamp": "2026-03-15T11:19:35.672+00:00"
+        },
+        {
+          "type": "tool_use",
+          "name": "bash",
+          "input": {
+            "command": "mkdir -p /home/shako/REPOS/Indie-Hacking/ai-laws-of-simplicity/scripts",
+            "description": "Create scripts directory"
+          },
+          "timestamp": "2026-03-15T11:19:35.672+00:00"
+        },
+        {
+          "type": "tool_use",
+          "name": "bash",
+          "input": {
+            "command": "ls /home/shako/REPOS/Indie-Hacking/ai-laws-of-simplicity/skills/ 2>/dev/null || echo \"No skills directory\"",
+            "description": "Check skills directory exists"
+          },
+          "timestamp": "2026-03-15T11:19:35.672+00:00"
+        },
+        {
+          "type": "assistant",
+          "text": "I'll implement all tasks now. Let me create the files in parallel wherepossible:",
+          "timestamp": "2026-03-15T11:19:35.672+00:00"
+        },
+        {
+          "type": "tool_use",
+          "name": "write",
+          "input": {
+            "content": "#!/bin/bash\n# scripts/run_experiment.sh\n# Entry point for running the experiment\n\nset -e\n\necho \"=== Laws of Simplicity Experiment Runner ===\"\necho \"\"\n\n# Check Python version\npython_version=$(python3 --version 2>&1 | awk '{print $2}')\necho \"Python version: $python_version\"\n\n# Install dependencies\necho \"Installing dependencies...\"\npip install -r requirements.txt\n\n# Create output directories\nmkdir -p data/raw data/results\n\n# Run experiment\necho \"\"\necho \"Starting experiment...\"\npython -m experiment.runner \"$@\"\n\necho \"\"\necho \"Experiment complete. Results in data/results/\"",
+            "filePath": "/home/shako/REPOS/Indie-Hacking/ai-laws-of-simplicity/scripts/run_experiment.sh"
+          },
+          "timestamp": "2026-03-15T11:20:23.204+00:00"
+        },
+        {
+          "type": "tool_use",
+          "name": "write",
+          "input": {
+            "content": "#!/usr/bin/env python3\n# scripts/analyze_results.py\n# Post-experiment statistical analysis\n\nimport json\nimport sys\nfrom pathlib import Path\n\nsys.path.insert(0, str(Path(__file__).parent.parent))\n\nfrom experiment.config import DEFAULT_CONFIG\nfrom experiment.runner import ExperimentRunner\n\n\ndef main():\n    \"\"\"Analyze existing results without re-running experiments.\"\"\"\n    runner = ExperimentRunner(DEFAULT_CONFIG)\n\n    results_csv = runner.config.results_dir / \"aggregate_results.csv\"\n    if not results_csv.exists():\n        print(f\"Error: No results found at {results_csv}\")\n        print(\"Run the experiment first: ./scripts/run_experiment.sh\")\n        sys.exit(1)\n\n    analysis = runner.analyze()\n\n    generate_figures(runner.config.results_dir, analysis)\n\n    print(\"Analysis complete. See:\")\n    print(f\"  - {runner.config.results_dir / 'analysis.json'}\")\n    print(f\"  - {runner.config.results_dir / 'figures/'}\")\n\n\ndef generate_figures(output_dir: Path, analysis: dict) -> None:\n    \"\"\"Generate paper figures.\"\"\"\n    import pandas as pd\n\n    figures_dir = output_dir / \"figures\"\n    figures_dir.mkdir(exist_ok=True)\n\n    df = pd.read_csv(output_dir / \"aggregate_results.csv\")\n\n    # Figure 1: Token reduction distribution\n    import matplotlib.pyplot as plt\n\n    fig, ax = plt.subplots(figsize=(10, 6))\n    control = df[df[\"condition\"] == \"control\"][\"total_tokens\"]\n    treatment = df[df[\"condition\"] == \"treatment\"][\"total_tokens\"]\n\n    ax.hist(control, bins=30, alpha=0.6, label=\"Control\", color=\"blue\")\n    ax.hist(treatment, bins=30, alpha=0.6, label=\"Treatment\", color=\"green\")\n    ax.axvline(\n        control.mean(), color=\"blue\", linestyle=\"--\", label=f\"Control mean: {control.mean():.0f}\"\n    )\n    ax.axvline(\n        treatment.mean(), color=\"green\", linestyle=\"--\", label=f\"Treatment mean: {treatment.mean():.0f}\"\n    )\n    ax.set_xlabel(\"Total Tokens\")\n    ax.set_ylabel(\"Frequency\")\n    ax.set_title(\"Token Distribution: Control vs Treatment\")\n    ax.legend()\n    plt.tight_layout()\n    plt.savefig(figures_dir / \"figure1_token_distribution.png\", dpi=150)\n    plt.close()\n\n    # Figure 2: Time-to-completion histogram\n    fig, ax = plt.subplots(figsize=(10, 6))\n    time_control = df[df[\"condition\"] == \"control\"][\"time_seconds\"]\n    time_treatment = df[df[\"condition\"] == \"treatment\"][\"time_seconds\"]\n\n    ax.hist(time_control, bins=30, alpha=0.6, label=\"Control\", color=\"blue\")\n    ax.hist(time_treatment, bins=30, alpha=0.6, label=\"Treatment\", color=\"green\")\n    ax.axvline(time_control.median(), color=\"blue\", linestyle=\"--\")\n    ax.axvline(time_treatment.median(), color=\"green\", linestyle=\"--\")\n    ax.set_xlabel(\"Time (seconds)\")\n    ax.set_ylabel(\"Frequency\")\n    ax.set_title(\"Time-to-Completion Distribution\")\n    ax.legend()\n    plt.tight_layout()\n    plt.savefig(figures_dir / \"figure2_time_distribution.png\", dpi=150)\n    plt.close()\n\n    print(f\"Figures saved to {figures_dir}\")\n\n\nif __name__ == \"__main__\":\n    main()",
+            "filePath": "/home/shako/REPOS/Indie-Hacking/ai-laws-of-simplicity/scripts/analyze_results.py"
+          },
+          "timestamp": "2026-03-15T11:20:23.204+00:00"
+        },
+        {
+          "type": "tool_use",
+          "name": "write",
+          "input": {
+            "content": "# Dockerfile\n# Reproducible experiment environment\n\nFROM python:3.11-slim\n\nWORKDIR /app\n\n# Install system dependencies\nRUN apt-get update && apt-get install -y \\\n    git \\\n    curl \\\n    && rm -rf /var/lib/apt/lists/*\n\n# Install Python dependencies\nCOPY requirements.txt .\nRUN pip install --no-cache-dir -r requirements.txt\n\n# Copy experiment code\nCOPY experiment/ ./experiment/\nCOPY scripts/ ./scripts/\nCOPY skills/ ./skills/\n\n# Create data directories\nRUN mkdir -p data/raw data/results\n\n# Set entry point\nENTRYPOINT [\"python\", \"-m\", \"experiment.runner\"]",
+            "filePath": "/home/shako/REPOS/Indie-Hacking/ai-laws-of-simplicity/Dockerfile"
+          },
+          "timestamp": "2026-03-15T11:20:23.204+00:00"
+        },
+        {
+          "type": "tool_use",
+          "name": "write",
+          "input": {
+            "content": "# Laws of Simplicity Experiment\n\nThis directory contains the experiment runner for the research paper \"On the Impact of Laws of Simplicity Skill on the Efficiency of AI Coding Agents.\"\n\n## Quick Start\n\n```bash\n# Install dependencies\npip install -r requirements.txt\n\n# Run experiment\n./scripts/run_experiment.sh\n\n# Analyze results\npython scripts/analyze_results.py\n```\n\n## Experiment Design\n\n### A/B Controlled Study\n\n- **Control:** Agent with default skills only\n- **Treatment:** Agent with Laws of Simplicity skill loaded\n\nEach task is run in both conditions with counterbalanced order to eliminate practice effects.\n\n### Benchmarks\n\n- **SWE-bench Lite:** 100 tasks (real-world GitHub issues)\n- **HumanEval:** 100 tasks (function-level coding problems)\n\n### Metrics\n\n| Metric | Definition |\n|--------|------------|\n| Input tokens | Tokens sent to model |\n| Output tokens | Tokens generated |\n| Success rate | Tasks passing test suite |\n| Time | Wall-clock time per task |\n| Iterations | Number of agent reasoning cycles |\n\n### Statistical Analysis\n\n- **RQ1 (Token reduction):** Paired t-test, Cohen's d effect size\n- **RQ2 (Success rate):** McNemar's test for paired binary outcomes\n- **RQ3 (By difficulty):** Two-way ANOVA (Condition xComplexity)\n\n## Directory Structure\n\n```\nai-laws-of-simplicity/\n├── experiment/\n│   ├── runner.py           # Main orchestrator\n│   ├── config.py           # Configuration\n│   ├── harness/            # Benchmark harnesses│   │   ├── base.py         # Abstract base\n│   │   ├── swe_bench.py    # SWE-bench implementation\n│   │   └── humaneval.py    # HumanEval implementation\n│   ├── metrics/            # Collection and analysis\n│   │   ├── collector.py    # Metrics collection\n│   │   └── analyzer.py     # Statistical analysis\n│   └── utils/\n│       └── isolation.py    # Process isolation\n├── data/\n│   ├── raw/                # Per-task JSON logs\n│   └── results/            # Aggregated CSV\n├── scripts/\n│   ├── run_experiment.sh   # Entry point\n│   └── analyze_results.py  # Post-processing\n├── skills/\n│   └── laws-of-simplicity/\n│       └── SKILL.md        # The skill being tested\n├── requirements.txt        # Python dependencies\n└── Dockerfile              # Reproducibility container\n```\n\n## Reproducibility\n\n### Docker\n\n```bash\ndocker build -t simplicity-experiment .\ndocker run -v $(pwd)/data:/app/data simplicity-experiment\n```\n\n### Configuration\n\nEdit `experiment/config.py` to modify:\n- Number of tasks per benchmark\n- Timeout settings\n- Agent model\n- Skill configurations\n\n## Citation\n\nIf you use this experiment framework, please cite:\n\n```bibtex\n@article{simplicity2026,\n  title={On the Impact of Laws of Simplicity Skill on the Efficiency of AI Coding Agents},\n  author={...},\n  journal={arXiv preprint},\n  year={2026}\n}\n```\n\n## License\n\nMIT License",
+            "filePath": "/home/shako/REPOS/Indie-Hacking/ai-laws-of-simplicity/experiment/README.md"
+          },
+          "timestamp": "2026-03-15T11:20:23.204+00:00"
+        },
+        {
+          "type": "assistant",
+          "text": "Now let me create the scripts, Dockerfile,and README:",
+          "timestamp": "2026-03-15T11:20:23.204+00:00"
+        },
+        {
+          "type": "tool_use",
+          "name": "bash",
+          "input": {
+            "command": "chmod +x /home/shako/REPOS/Indie-Hacking/ai-laws-of-simplicity/scripts/run_experiment.sh /home/shako/REPOS/Indie-Hacking/ai-laws-of-simplicity/scripts/analyze_results.py",
+            "description": "Make scripts executable"
+          },
+          "timestamp": "2026-03-15T11:20:56.477+00:00"
+        },
+        {
+          "type": "assistant",
+          "text": "Now let me make scripts executable and run thesmoke test:",
+          "timestamp": "2026-03-15T11:20:56.477+00:00"
+        },
+        {
+          "type": "tool_use",
+          "name": "bash",
+          "input": {
+            "command": "cd /home/shako/REPOS/Indie-Hacking/ai-laws-of-simplicity && python -c \"\nfrom experiment.config import DEFAULT_CONFIG\nfrom experiment.harness.base import BenchmarkHarness, TaskResult, TaskSpec\nfrom experiment.harness.swe_bench import SWEBenchHarness\nfrom experiment.harness.humaneval import HumanEvalHarness\nfrom experiment.metrics.collector import MetricsCollector, RunMetrics\nfrom experiment.utils.isolation import IsolatedRunner\nfrom experiment.runner import ExperimentRunner\nprint('All imports OK')\n\"",
+            "description": "Verify all experiment module imports"
+          },
+          "timestamp": "2026-03-15T11:21:10.408+00:00"
+        },
+        {
+          "type": "tool_use",
+          "name": "bash",
+          "input": {
+            "command": "cd /home/shako/REPOS/Indie-Hacking/ai-laws-of-simplicity && python3 -c \"\nfrom experiment.config import DEFAULT_CONFIG\nfrom experiment.harness.base import BenchmarkHarness, TaskResult, TaskSpec\nfrom experiment.harness.swe_bench import SWEBenchHarness\nfrom experiment.harness.humaneval import HumanEvalHarness\nfrom experiment.metrics.collector import MetricsCollector, RunMetrics\nfrom experiment.utils.isolation import IsolatedRunner\nfrom experiment.runner import ExperimentRunner\nprint('All imports OK')\n\"",
+            "description": "Verify all experiment module imports"
+          },
+          "timestamp": "2026-03-15T11:21:14.597+00:00"
+        },
+        {
+          "type": "tool_use",
+          "name": "bash",
+          "input": {
+            "command": "cd /home/shako/REPOS/Indie-Hacking/ai-laws-of-simplicity && python3 -c \"\nimport tempfile\nfrom pathlib import Path\nfrom experiment.metrics.collector import MetricsCollector, RunMetrics\nfrom experiment.harness.base import TaskResult, TaskSpec\nfrom experiment.utils.isolation import IsolatedRunner\nfrom experiment.config import DEFAULT_CONFIG\n\n# Test 1: RunMetrics - verify total_tokens calculation\nmetrics = RunMetrics(\n    task_id='test_task',\n    benchmark='test_bench',\n    condition='control',\n    input_tokens=1000,\n    output_tokens=500,\n    total_tokens=1500,  # Must equal input + output\n    success=True,\n    time_seconds=10.0,\n    iterations=3,\n    error=None,\n    timestamp='2026-01-01T00:00:00Z'\n)\nprint(f'RunMetrics total_tokens: {metrics.total_tokens}')\nassert metrics.total_tokens == metrics.input_tokens + metrics.output_tokens, 'total_tokens must equal input + output'\nprint('Test 1 passed: total_tokens calculation')\n\n# Test 2: TaskSpec creation\ntask = TaskSpec(\n    task_id='test_task',\n    benchmark='swe_bench_lite',\n    prompt='Fix the bug',\n    test_file=None,\n    expected_solution='patch content',\n    difficulty='medium'\n)\nprint(f'TaskSpec created: {task.task_id}')\nprint('Test 2 passed: TaskSpec creation')\n\n# Test 3: IsolatedRunner context creation\nrunner = IsolatedRunner()\nctx = runner.create_fresh_context()\nprint(f'Context created with temp_dir: {Path(ctx[\\\"temp_dir\\\"]).exists()}')\nprint(f'Skills loaded list: {ctx[\\\"skills_loaded\\\"]}')\nrunner.cleanup(ctx)\nprint('Test 3 passed: IsolatedRunner context')\n\n# Test 4: MetricsCollector\nwith tempfile.TemporaryDirectory() as tmpdir:\n    collector = MetricsCollector(Path(tmpdir))\n    run_ctx = collector.start_run('task_1', 'swe_bench_lite', 'control')\n    collector.update_tokens(run_ctx, 100,50)\n    collector.increment_iteration(run_ctx)\n    result = collector.end_run(run_ctx, success=True)\n    \n    # Verify: total = input + output\n    assert result.total_tokens == 150, f'Expected total_tokens=150, got {result.total_tokens}'\n    print(f'RunMetrics total_tokens: {result.total_tokens}')\n    print('Test 4 passed: MetricsCollector')\n\nprint('')\nprint('All smoke tests passed!')\n\"",
+            "description": "Run mock data smoke tests"
+          },
+          "timestamp": "2026-03-15T11:21:18.938+00:00"
+        },
+        {
+          "type": "assistant",
+          "text": "Now let me create and run a mock data test script to verify the datastructures:",
+          "timestamp": "2026-03-15T11:21:18.938+00:00"
+        },
+        {
+          "type": "tool_use",
+          "name": "bash",
+          "input": {
+            "command": "cd /home/shako/REPOS/Indie-Hacking/ai-laws-of-simplicity && git status",
+            "description": "Check git status"
+          },
+          "timestamp": "2026-03-15T11:21:29.991+00:00"
+        },
+        {
+          "type": "assistant",
+          "text": "All smoke tests pass. Now let me commiteach task:",
+          "timestamp": "2026-03-15T11:21:29.991+00:00"
+        },
+        {
+          "type": "tool_use",
+          "name": "bash",
+          "input": {
+            "command": "cd /home/shako/REPOS/Indie-Hacking/ai-laws-of-simplicity && git add experiment/utils/isolation.py && git commit -m \"feat: add process isolation utilities\"",
+            "description": "Commit Task 7.1: isolation utilities"
+          },
+          "timestamp": "2026-03-15T11:21:34.081+00:00"
+        }
+      ],
+      "total_additions": 0,
+      "total_deletions": 0,
+      "accepted_lines": 108,
+      "overriden_lines": 0
+    }
+  }
+}
