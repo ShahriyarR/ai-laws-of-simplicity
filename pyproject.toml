@@ -1,0 +1,32 @@
+[build-system]
+requires = ["setuptools>=68.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ai-laws-of-simplicity"
+version = "0.1.0"
+description = "Research experiment to measure the impact of Laws of Simplicity skill on AI coding agent efficiency"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "pandas>=2.0.0",
+    "scipy>=1.11.0",
+    "numpy>=1.24.0",
+    "docker>=6.0.0",
+    "swebench>=1.0.0",
+    "tqdm>=4.65.0",
+    "pyyaml>=6.0",
+    "datasets>=2.14.0",
+    "matplotlib>=3.7.0",
+    "seaborn>=0.12.0",
+    "mini-swe-agent>=2.2.7",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=9.0.2",
+    "pytest-cov>=4.0.0",
+]
+
+[tool.setuptools]
+packages = ["experiment"]

@@ -1,0 +1,12 @@
+docs/
+.venv/
+uv.lock
+.ruff_cache/
+ai_laws_of_simplicity.egg-info
+data
+__pycache__
+*.pyc
+
+# Environment files
+.env
+.env.*
