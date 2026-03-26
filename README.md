@@ -33,6 +33,22 @@ Tell OpenCode to fetch and follow the installation instructions:
 Fetch and follow instructions from https://raw.githubusercontent.com/AI-Provenance/ai-laws-of-simplicity/main/INSTALL.md
 ```
 
+### For Claude Code Users
+
+Copy the skill to Claude Code's global skills directory:
+
+```bash
+mkdir -p ~/.claude/skills/laws-of-simplicity
+curl -o ~/.claude/skills/laws-of-simplicity/SKILL.md \
+  https://raw.githubusercontent.com/AI-Provenance/ai-laws-of-simplicity/main/skills/laws-of-simplicity/SKILL.md
+```
+
+The skill will be available in all Claude Code sessions. Invoke it with:
+
+```
+/laws-of-simplicity
+```
+
 ### For Other Platforms
 
 See the [INSTALL.md](INSTALL.md) file for detailed instructions.
