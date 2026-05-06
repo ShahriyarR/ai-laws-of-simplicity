@@ -83,6 +83,16 @@ Agents should consider invoking this skill:
 4. Before submitting code for review
 5. After completing a task to reflect on simplicity principles applied
 
+## Evidence Before Declaring Problems
+
+Before calling something a bug, missing behavior, unnecessary complexity, or design problem, verify it against the actual implementation:
+
+1. Trace the relevant function and method calls from the entry point to the behavior in question.
+2. Check called functions, methods, hooks, handlers, middleware, overrides, and guards before concluding behavior is absent.
+3. Follow imports and indirection far enough to confirm whether another layer already handles the case.
+4. State the evidence found. If verification is incomplete, present it as an open question or risk, not as a confirmed problem.
+5. Prefer "I need to verify whether..." over naming a problem before the call path has been checked.
+
 ## Example Applications
 
 **REDUCE**: When considering adding a new feature, ask "Does this feature provide essential value, or could we achieve the goal with less complexity?"

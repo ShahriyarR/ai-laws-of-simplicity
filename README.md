@@ -29,6 +29,7 @@ To install this skill in your AI coding agent:
 ### For OpenCode Users
 
 Tell OpenCode to fetch and follow the installation instructions:
+
 ```
 Fetch and follow instructions from https://raw.githubusercontent.com/AI-Provenance/ai-laws-of-simplicity/main/INSTALL.md
 ```
