@@ -26,9 +26,22 @@ This repository contains:
 
 To install this skill in your AI coding agent:
 
+### For Cursor Users
+
+Install the skill globally for all Cursor projects:
+
+```bash
+mkdir -p ~/.cursor/skills/laws-of-simplicity && curl -fsSL -o ~/.cursor/skills/laws-of-simplicity/SKILL.md https://raw.githubusercontent.com/AI-Provenance/ai-laws-of-simplicity/main/skills/laws-of-simplicity/SKILL.md
+```
+
+Then start a new Cursor chat and ask the agent to use the `laws-of-simplicity` skill.
+
+For a project-only install, copy `skills/laws-of-simplicity/` into `.cursor/skills/` in your repository.
+
 ### For OpenCode Users
 
 Tell OpenCode to fetch and follow the installation instructions:
+
 ```
 Fetch and follow instructions from https://raw.githubusercontent.com/AI-Provenance/ai-laws-of-simplicity/main/INSTALL.md
 ```
