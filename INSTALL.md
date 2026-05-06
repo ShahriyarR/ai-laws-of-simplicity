@@ -8,6 +8,18 @@ The Laws of Simplicity skill is a standalone module that guides AI agents to app
 
 ## Installation Steps
 
+### Quick Install for Cursor
+
+Install the skill globally for all Cursor projects:
+
+```bash
+mkdir -p ~/.cursor/skills/laws-of-simplicity && curl -fsSL -o ~/.cursor/skills/laws-of-simplicity/SKILL.md https://raw.githubusercontent.com/AI-Provenance/ai-laws-of-simplicity/main/skills/laws-of-simplicity/SKILL.md
+```
+
+After installing, start a new Cursor chat and ask the agent to use the `laws-of-simplicity` skill.
+
+For a project-only install, copy `skills/laws-of-simplicity/` into `.cursor/skills/` in your repository.
+
 ### 1. Clone or Download This Repository
 
 First, obtain a copy of this repository:
@@ -25,15 +37,20 @@ cd ai-laws-of-simplicity
 Different agents store skills in different locations. Find the appropriate directory for your agent:
 
 #### OpenCode
+
 - `~/.config/opencode/skills/`
 
 #### Cursor
-- `~/.cursor/skills/` or check Cursor settings for skills directory
+
+- Personal skills: `~/.cursor/skills/`
+- Project skills: `.cursor/skills/`
 
 #### GitHub Copilot
+
 - Skills are typically configured through the Copilot extension settings
 
 #### Other Agents
+
 Consult your agent's documentation for where to place custom skills
 
 ### 3. Copy the Skill Directory
@@ -43,6 +60,12 @@ Copy the `skills/laws-of-simplicity/` directory from this repository to your age
 ```bash
 # Example for OpenCode
 cp -r skills/laws-of-simplicity/ ~/.config/opencode/skills/
+
+# Example for Cursor personal skills
+cp -r skills/laws-of-simplicity/ ~/.cursor/skills/
+
+# Example for Cursor project skills
+mkdir -p .cursor/skills && cp -r skills/laws-of-simplicity/ .cursor/skills/
 
 # Example for a generic agent
 cp -r skills/laws-of-simplicity/ /path/to/your/agent/skills/
